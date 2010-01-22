@@ -4,7 +4,9 @@
 package org.fna.fnasearch;
 
 
-import java.io.File;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.dom4j.Attribute;
 import org.dom4j.Document;
@@ -19,27 +21,38 @@ import org.dom4j.io.SAXReader;
  */
 public class ImportXmlVisitor extends VisitorSupport{
 	
-	static String baseURI = "http://www.fna.org/fnasearch/";
 	Document doc = null;
 	SAXReader reader = null;
 	TripleStoreHandler store = null;
 	
-	String treatment = null;
+	String treatmentid;
 	
-	public ImportXmlVisitor(){
+	public ImportXmlVisitor(TripleStoreHandler newstore){
 		reader = new SAXReader();
-		store = new TripleStoreHandler("f:\\projects\\fnasearch\\sdb.ttl");
+		store = newstore;
 	}
 	
 	public void getDoc(String filename){
+		/*
+		 * initiate file reading and start parsing for basic information
+		 * such as the URI of this treatment contained in this file,
+		 * source information like volumn, FNA, and all the names the treatment might have
+		 */
 		try
 	      {
 	         this.doc = reader.read(filename);
-	         Element element = doc.getRootElement();
-	         String treatment_id = element.element("number").getStringValue();
-	       	 String volumn = "volumn_19"; //should be read somewhere
-	       	 this.treatment = ImportXmlVisitor.encodeTreatmentURI(volumn, treatment_id);
-	       	 
+	         Pattern filename_pattern = Pattern.compile("(?<=\\\\)\\d+(?=\\.[a-zA-Z]{3}$)", Pattern.CASE_INSENSITIVE|Pattern.UNICODE_CASE|Pattern.CANON_EQ);
+	         Matcher filename_matcher = filename_pattern.matcher(filename);
+	         if(filename_matcher.find()){
+	        	 String fileid = filename_matcher.group();
+	        	 //has to change after new XML formats
+	        	 String vol = doc.getRootElement().elements("volumn").size()!=0? doc.getRootElement().element("volumn").getTextTrim():"19";
+	        	 this.treatmentid = vol +"-"+fileid;
+
+	         }else{
+	        	 throw new DocumentException();
+	         }
+	     
 	      }
 	      catch (DocumentException e)
 	      {
@@ -49,95 +62,49 @@ public class ImportXmlVisitor extends VisitorSupport{
 	
 	public void visitDoc(){
 		try{
-			this.doc.getRootElement().element("description").accept(this);
+			this.doc.getRootElement().accept(this);
 		}catch(Exception e){
 			System.out.println(e.getClass().toString()+e.getCause()+e.getStackTrace()+e.getMessage());
 		}
 	}
 	
-	public static String encodeTreatmentURI(String volumn, String treatment_id){
-		return baseURI+volumn+"/"+treatment_id;
-	}
-	
-	public static String encodeCharacterURI(String character ){
-		return baseURI+"characters#"+character;
-	}
 	
 	public void visit(Element element){
-        String element_name = element.getName();
-        if(element_name != "description"){
-	        String element_value = element.getStringValue();
-	        boolean element_has_child = (element.elements().size()== 0 ? false:true);
-	        boolean element_has_attr = (element.attributes().size() == 0 ? false:true);
-	        boolean isres;
-	        
-	        String s = element.getParent().getPath().replace("/treatment/description", this.treatment);
-	        String p = ImportXmlVisitor.encodeCharacterURI(element_name);
-	        String o = null;
-	        if (element_has_child == false && element_has_attr == false){
-	        	o = element_value;
-	        	isres = false;
-	        }else{
-	        	o = element.getPath().replace("/treatment/description", this.treatment);
-	        	isres = true;
-	        }
-	        //System.out.println(s+"\t\t\t"+p+"\t\t\t"+o+"\t"+isres);
-	        store.insertTriple(s, p, o, isres);
-        }
+        
+		/*
+		 * URIFactory shall decide based on element name, path, parent element, child element, attributes and string value
+		 * whether or not and how shall the triple be stated.
+		 * A mapping with s,p,o shall then be returned.
+		 * The mapping is empty if nothing is supposed to be inserted.
+		 */
+		
+		//retrieve information for the element
+		String path = element.getPath();
+		String parentpath = element.isRootElement()?element.getPath():element.getParent().getPath();      
+	    String value = element.getTextTrim();
+	    boolean has_child = (element.elements().size()== 0 ? false:true);
+	    boolean has_attr = (element.attributes().size() == 0 ? false:true);
+	    
+	    //pass the retrieved information to URIFactory
+	    Map<String , String> statement = URIFactory.encodeURI(treatmentid , path, parentpath, value, has_child, has_attr);
+	    if(!statement.isEmpty()){
+	    	//insert the statement into triple store
+	    	store.insertTriple(statement.get("s"), statement.get("p"), statement.get("o"), Boolean.getBoolean(statement.get("isres")));
+	    }
+	    
     }
 	
     public void visit(Attribute attr){
-        String attr_name = attr.getName();
-        String attr_value = attr.getValue();
-        
-        String s = attr.getParent().getPath().replace("/treatment/description", this.treatment);;
-        String p = attr_name;
-        Element temp = attr.getParent();
-        do{
-        	p = temp.getName()+"_"+p;
-        	temp = temp.getParent();
-        }while(temp.getName() != "description");
-        p = ImportXmlVisitor.encodeCharacterURI(p);
-        String o = attr_value;
-        boolean isres = false;
-        
-        //System.out.println(s+"\t\t\t"+p+"\t\t\t"+o+"\t"+isres);
-        store.insertTriple(s, p, o, isres);
+    	//retrieve information for the element
+		String path = attr.getPath();
+		String parentpath = attr.getParent().getPath();      
+	    String value = attr.getStringValue();
+	    
+	    //pass the retrieved information to URIFactory
+	    Map<String , String> statement = URIFactory.encodeURI(treatmentid , path, parentpath, value, false, false);
+	    if(!statement.isEmpty()){
+	    	//insert the statement into triple store
+	    	store.insertTriple(statement.get("s"), statement.get("p"), statement.get("o"), Boolean.getBoolean(statement.get("isres")));
+	    }
     }
-    
-	public static void main(String[] args){
-				/*
-		        File dir = new File("f:\\projects\\fnasearch\\final"); 
-		        File[] files = dir.listFiles(); 
-		        if (files == null){
-		        	System.out.print("No file(s) found.");
-		        	return;
-		        }else{
-		        	ImportXmlVisitor myvisitor = new ImportXmlVisitor();
-		        	myvisitor.store.formatStore();
-		        	for (int i = 0; i < files.length; i++) { 
-				            if (!files[i].isDirectory()) {
-				            	String filename = files[i].getName();
-				                String extname = filename.substring(filename.indexOf(".")+1);
-				            	//System.out.println(extname);
-				                if (extname.equals("xml")){
-				                	String fullpath = files[i].getAbsolutePath();
-				                	System.out.println(fullpath);
-				                	myvisitor.getDoc(fullpath);
-				                	//System.out.println(myvisitor.treatment);
-				                	myvisitor.visitDoc();
-				            	}    
-				            } 
-				        } 
-		        	myvisitor.store.closeStore();
-		        }
-		        */	        
-		
-		ImportXmlVisitor myvisitor = new ImportXmlVisitor();
-		myvisitor.store.formatStore();
-		myvisitor.getDoc("f:\\projects\\fnasearch\\final\\1.xml");
-		myvisitor.visitDoc();
-		myvisitor.store.writeStore();
-		myvisitor.store.closeStore();
-	}
 }
