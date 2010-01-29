@@ -1,0 +1,22 @@
+@prefix sdb:     <http://jena.hpl.hp.com/2007/sdb#> .
+@prefix rdfs:	 <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ja:      <http://jena.hpl.hp.com/2005/11/Assembler#> .
+
+# MySQL
+
+
+<#store> rdf:type sdb:Store ;
+    sdb:layout     "layout2/index" ;
+    sdb:connection <#conn> ;
+    sdb:engine     "MyISAM" ;      # MySQL specific
+.
+
+<#conn> rdf:type sdb:SDBConnection ;
+    sdb:sdbType       "MySQL" ;    # Needed for JDBC URL
+    sdb:sdbHost       "192.168.0.1" ;
+    sdb:sdbName       "fnasearch" ;
+    sdb:sdbUser       "root";
+    sdb:sdbPassword   "148124";
+    sdb:driver        "com.mysql.jdbc.Driver" ;
+    .

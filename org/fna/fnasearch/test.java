@@ -1,20 +1,19 @@
 package org.fna.fnasearch;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.fna.fnasearch.rdfstore.TripleStoreHandler;
+import org.fna.fnasearch.xml.XMLReader;
+
 public class test{
 	public static void main(String[] args){
-				
 		TripleStoreHandler store = new TripleStoreHandler("f:\\projects\\fnasearch\\sdb.ttl");
-		ImportXmlVisitor myvisitor = new ImportXmlVisitor(store);
+		XMLReader myvisitor = new XMLReader(store);
 	
 		//Begin of import xml files in a folder	        
-		
+		/*
 		File dir = new File("f:\\projects\\fnasearch\\final"); 
 		        File[] files = dir.listFiles(); 
 		        if (files == null){
@@ -43,15 +42,13 @@ public class test{
 		        }
 		     
 		//End of import xml files in a certain folder
-		        
+		*/        
 		//Begin of import single xml file
-		        	
-		//myvisitor.store.formatStore();
-		//myvisitor.getDoc("f:\\projects\\fnasearch\\final\\262.xml");
-		//myvisitor.visitDoc();
+		myvisitor.store.formatStore();
+		myvisitor.getDoc("f:\\projects\\forken\\1.xml");
+		myvisitor.visitDoc();
 		//myvisitor.store.writeStore();
-		//myvisitor.store.closeStore();
-		
+		myvisitor.store.closeStore();
 		//End of import single xml file
 		   
 		//Begin of test queries
