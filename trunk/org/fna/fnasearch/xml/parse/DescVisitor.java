@@ -110,35 +110,44 @@ public class DescVisitor extends XMLVisitor {
 		this.statements.add(new ResourceStatement(URI.baseURI+"ATYPICAL_SIZE",URI.baseURI+URI.subclassof,"SIZE"));
 		
 		//differentiate count integer from all the rest double
+		
+		//stmt: this struct has_xxx this struct/xxxx
+		//stmt: this struct has_xxxx this struct/xxxx
+		this.statements.add(new ResourceStatement(struct, URI.baseURI+"has_"+e.attributeValue("name"), struct+"/"+e.attributeValue("name")));
+		
 		if(e.attributeValue("name").equals("count")){
-			//stmt: this struct has_xxxx value^^xsd:positiveInteger
-			this.statements.add(new PosIntLiteralStatement(struct, URI.baseURI+"has_"+e.attributeValue("name"), Integer.parseInt(e.attributeValue("value"))));
+			//stmt: this struct has_value value^^xsd:positiveInteger
+			this.statements.add(new PosIntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_value", Integer.parseInt(e.attributeValue("value"))));
 		}else{
-			//stmt: this struct has_xxxx value^^xsd:double
-			this.statements.add(new DoubleLiteralStatement(struct, URI.baseURI+"has_"+e.attributeValue("name"),Double.parseDouble(e.attributeValue("value"))));
+			//stmt: this struct has_value value^^xsd:double
+			this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_value",Double.parseDouble(e.attributeValue("value"))));
 		}
 	}
 	
 	private void visitRangeQuant(Element e){
 		//handle count or value with range
 		if(e.attributeValue("name").equals("count")){
-			//stmt: this struct has_xxxx_range_from value^^xsd:positiveInteger
+			//stmt: this struct has_xxxx this struct/xxxx
+			this.statements.add(new ResourceStatement(struct, URI.baseURI+"has_"+e.attributeValue("name"), struct+"/"+e.attributeValue("name")));
+			//stmt: this struct has_range_from value^^xsd:positiveInteger
 			if(e.attributeValue("from")!=null)
-			this.statements.add(new PosIntLiteralStatement(struct, URI.baseURI+"has_"+e.attributeValue("name")+"_range_from", Integer.parseInt(e.attributeValue("from"))));
-			//stmt: this struck has_xxxx_range_to value^^xsd:positiveInteger
+			this.statements.add(new PosIntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_from", Integer.parseInt(e.attributeValue("from"))));
+			//stmt: this struck has_range_to value^^xsd:positiveInteger
 			if(e.attributeValue("to")!=null){
-				this.statements.add(new PosIntLiteralStatement(struct, URI.baseURI+"has_"+e.attributeValue("name")+"_range_to", Integer.parseInt(e.attributeValue("to"))));
+				this.statements.add(new PosIntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_to", Integer.parseInt(e.attributeValue("to"))));
 			}else{
 				if(e.attributeValue("upper_restriction")!=null&&e.attributeValue("upper_restriction").equals("false"))
-				this.statements.add(new PosIntLiteralStatement(struct, URI.baseURI+"has_"+e.attributeValue("name")+"_range_from", Long.MAX_VALUE));
+				this.statements.add(new PosIntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_to", Long.MAX_VALUE));
 			}
 		}else{
-			//stmt: this struct has_xxxx_range_from value^^xsd:double
+			//stmt: this struct has_xxx this struct/xxxx
+			this.statements.add(new ResourceStatement(struct, URI.baseURI+"has_"+e.attributeValue("name"), struct+"/"+e.attributeValue("name")));
+			//stmt: this struct has_range_from value^^xsd:double
 			if(e.attributeValue("from")!=null)
-			this.statements.add(new DoubleLiteralStatement(struct, URI.baseURI+"has_"+e.attributeValue("name")+"_range_from", Double.parseDouble(e.attributeValue("from"))));
-			//stmt: this struck has_xxxx_range_to value^^xsd:double
+			this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_from", Double.parseDouble(e.attributeValue("from"))));
+			//stmt: this struck has_range_to value^^xsd:double
 			if(e.attributeValue("to")!=null){
-				this.statements.add(new DoubleLiteralStatement(struct, URI.baseURI+"has_"+e.attributeValue("name")+"_range_to", Double.parseDouble(e.attributeValue("to"))));
+				this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_to", Double.parseDouble(e.attributeValue("to"))));
 			}else{
 				//do nothing
 			}

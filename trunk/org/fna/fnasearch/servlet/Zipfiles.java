@@ -89,26 +89,24 @@ public class Zipfiles extends HttpServlet{
 						while ((bytesRead = zipin.read(buffer)) != -1)
 							zipout.write(buffer, 0, bytesRead);
 						zipin.close(); 
-					}else{
-						//if non found, try again with the file name reduced to the document name
-						//i.e. if above FNA-19-1.* has nothing found in /FNA/19/ now try with /FNA/19/1.*
-						doc = new File(this.docpath+"/"+breakdownuri[0]+"/"+breakdownuri[1]+"/"+breakdownuri[breakdownuri.length-1]+doctypes.getPattern()+doctypes.getExt());
-						if(doc.isFile()&&doc.canRead()){
-							//add to the zip
-							this.logger.debug("adding file: "+doc.getAbsolutePath());
-							FileInputStream in = new FileInputStream(doc); // Stream to read file
-							ZipEntry entry = new ZipEntry(doc.getName()); // Make a ZipEntry
-							entry.setSize((long)buffer.length);
-							crc.reset();
-							crc.update(buffer);
-							entry.setCrc( crc.getValue());
-							zipout.putNextEntry(entry); // Store entry
-							while ((bytesRead = in.read(buffer)) != -1)
-								zipout.write(buffer, 0, bytesRead);
-							in.close(); 
-						}else{
-							//ignore this doc
-						}
+					}
+					//try again with the file name reduced to the document name
+					//i.e. if above FNA-19-1.* has nothing found in /FNA/19/ now try with /FNA/19/1.*
+					doc = new File(this.docpath+"/"+breakdownuri[0]+"/"+breakdownuri[1]+"/"+breakdownuri[breakdownuri.length-1]+doctypes.getPattern()+doctypes.getExt());
+					if(doc.isFile()&&doc.canRead()){
+						//add to the zip
+						this.logger.debug("adding file: "+doc.getAbsolutePath());
+						FileInputStream in = new FileInputStream(doc); // Stream to read file
+						ZipEntry entry = new ZipEntry(doc.getName()); // Make a ZipEntry
+						entry.setSize((long)buffer.length);
+						crc.reset();
+						crc.update(buffer);
+						entry.setCrc( crc.getValue());
+						zipout.putNextEntry(entry); // Store entry
+						while ((bytesRead = in.read(buffer)) != -1)
+							zipout.write(buffer, 0, bytesRead);
+						in.close(); 
+
 					}
 				}
 			}

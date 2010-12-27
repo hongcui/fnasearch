@@ -248,7 +248,7 @@ public class QueryExec{
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void execQuery() throws QueryExecException{
 		try{
 			String key = null;
