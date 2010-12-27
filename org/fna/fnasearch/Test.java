@@ -68,8 +68,8 @@ public class Test {
 //		query.execQuery();
 //		logger.debug(query.getJsonresult());
 		//xml reading test
-//		XMLImporter importer = XMLImporter.getInstance();
-//		importer.doImport(store, true, "F:\\Projects\\old\\xml\\20101214", "F:\\Projects\\fnasearch\\docs");
+		XMLImporter importer = XMLImporter.getInstance();
+		importer.doImport(store, true, "F:\\Projects\\old\\xml\\20101214", "F:\\Projects\\fnasearch\\docs");
 		
 		
 	}
