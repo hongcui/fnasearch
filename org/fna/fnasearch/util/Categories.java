@@ -5,6 +5,7 @@ public enum Categories {
 	meta,
 	nomenclature,
 	description,
+	desc_range,
 	ecological_info,
 	distribution,
 	conservation,

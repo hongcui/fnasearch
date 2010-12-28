@@ -3,6 +3,7 @@ package org.fna.fnasearch.xml.parse;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fna.fnasearch.rdf.DoubleLiteralStatement;
+import org.fna.fnasearch.rdf.IntLiteralStatement;
 import org.fna.fnasearch.rdf.PosIntLiteralStatement;
 import org.fna.fnasearch.rdf.ResourceStatement;
 import org.fna.fnasearch.util.URI;
@@ -116,8 +117,8 @@ public class DescVisitor extends XMLVisitor {
 		this.statements.add(new ResourceStatement(struct, URI.baseURI+"has_"+e.attributeValue("name"), struct+"/"+e.attributeValue("name")));
 		
 		if(e.attributeValue("name").equals("count")){
-			//stmt: this struct has_value value^^xsd:positiveInteger
-			this.statements.add(new PosIntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_value", Integer.parseInt(e.attributeValue("value"))));
+			//stmt: this struct has_value value^^xsd:Integer
+			this.statements.add(new IntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_value", Integer.parseInt(e.attributeValue("value"))));
 		}else{
 			//stmt: this struct has_value value^^xsd:double
 			this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_value",Double.parseDouble(e.attributeValue("value"))));
@@ -129,15 +130,15 @@ public class DescVisitor extends XMLVisitor {
 		if(e.attributeValue("name").equals("count")){
 			//stmt: this struct has_xxxx this struct/xxxx
 			this.statements.add(new ResourceStatement(struct, URI.baseURI+"has_"+e.attributeValue("name"), struct+"/"+e.attributeValue("name")));
-			//stmt: this struct has_range_from value^^xsd:positiveInteger
+			//stmt: this struct has_range_from value^^xsd:Integer
 			if(e.attributeValue("from")!=null)
-			this.statements.add(new PosIntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_from", Integer.parseInt(e.attributeValue("from"))));
-			//stmt: this struck has_range_to value^^xsd:positiveInteger
+			this.statements.add(new IntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_from", Integer.parseInt(e.attributeValue("from"))));
+			//stmt: this struck has_range_to value^^xsd:Integer
 			if(e.attributeValue("to")!=null){
-				this.statements.add(new PosIntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_to", Integer.parseInt(e.attributeValue("to"))));
+				this.statements.add(new IntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_to", Integer.parseInt(e.attributeValue("to"))));
 			}else{
 				if(e.attributeValue("upper_restriction")!=null&&e.attributeValue("upper_restriction").equals("false"))
-				this.statements.add(new PosIntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_to", Long.MAX_VALUE));
+				this.statements.add(new IntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_to", Integer.MAX_VALUE));
 			}
 		}else{
 			//stmt: this struct has_xxx this struct/xxxx

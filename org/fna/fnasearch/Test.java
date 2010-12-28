@@ -62,7 +62,7 @@ public class Test {
 		
 //		QueryExec query = new QueryExec("F:\\Projects\\fnasearch\\WEB-INF\\sdb.ttl");
 //		query.setDocPath("F:\\Projects\\fnasearch\\docs");
-//		query.buildCount("{\"items\":[{\"cate\": \"elevation\",\"max\": \"NaN\",\"min\": 59}]}");
+//		query.buildCount("{\"items\":[{\"cate\":\"desc_range\",\"max\": 10,\"min\": 1,\"organ\": \"LEAF\",\"property\": \"count\"}]}");
 //		//test the query error, if error, return error msg, otherwise, submit query to triplestore
 //		logger.debug(query.getQuery());
 //		query.execQuery();
@@ -70,7 +70,5 @@ public class Test {
 		//xml reading test
 		XMLImporter importer = XMLImporter.getInstance();
 		importer.doImport(store, true, "F:\\Projects\\old\\xml\\20101214", "F:\\Projects\\fnasearch\\docs");
-		
-		
 	}
 }

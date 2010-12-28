@@ -216,6 +216,9 @@ public class SearchParam extends HttpServlet {
 					temp = temp.replaceFirst("has_", "");
 					JSONObject item = new JSONObject();
 					item.put("name", temp);
+					//if the value is possibly a range
+					if(Pattern.compile("count|size|width|height|area|length").matcher(temp).find())
+					item.put("isRange", true);
 					list.add(item);
 				}
 			}

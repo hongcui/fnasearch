@@ -39,7 +39,7 @@ public class ElevationVisitor extends DistVisitor {
 		
 		String s = URI.baseURI+this.hierarchy;
 		String p = URI.baseURI+URI.haselevation;
-		String o = URI.baseURI+treatmentid+"/"+name;
+		String o = URI.baseURI+this.hierarchy+"/"+name;
 		//stmt: hierarchy has_elevation treatmentid/elevation
 		this.statements.add(new ResourceStatement(s,p,o));
 		

@@ -1,6 +1,5 @@
 package org.fna.fnasearch.query;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -46,7 +45,7 @@ public class QueryExec{
 	@SuppressWarnings("unchecked")
 	public void buildSelect(String querytext) throws QueryExecException{
 		this.logger.debug("this is a select query");
-		this.select = new SelectQuery();
+		this.select = new SelectQuery(SelectQuery.DISTINCT);
 		JSONObject queryobj = new JSONObject();
 		JSONParser parser = new JSONParser();
 		try {
@@ -93,6 +92,7 @@ public class QueryExec{
 				case conservation: this.conservationQuery(queryline,select);break;
 				case nomenclature: this.nomQuery(queryline,select);break;
 				case description: this.descQuery(queryline,select);break;
+				case desc_range: this.descRangeQuery(queryline,select);break;
 				case taxonomy: this.taxonQuery(queryline,select);break;
 				default: break;
 				}
@@ -112,7 +112,7 @@ public class QueryExec{
 	@SuppressWarnings("unchecked")
 	public void buildCount(String querytext) throws QueryExecException{
 		this.logger.debug("this is a count query");
-		this.count = new CountQuery();
+		this.count = new CountQuery(SelectQuery.DISTINCT);
 		JSONObject queryobj = new JSONObject();
 		JSONParser parser = new JSONParser();
 		try {
@@ -128,6 +128,8 @@ public class QueryExec{
 			count.addGroup(new GroupLine(count.getVarBinding("doc"),count.getIRIBinding("fna:belongs_to"),count.getVarBinding("taxontree")));
 			count.addGroup(new GroupLine(count.getVarBinding("doc"),count.getIRIBinding("fna:has_source"),count.getVarBinding("source")));
 			count.addGroup(new GroupLine(count.getVarBinding("source"),count.getIRIBinding("fna:is_instance_of"),count.getIRIBinding("fna:SOURCE")));
+			count.getVarBinding("taxontree").setRetrieve();
+			
 			//add category groups
 			
 			
@@ -141,6 +143,7 @@ public class QueryExec{
 				case ecological_info: this.ecoQuery(queryline,count);break;
 				case nomenclature: this.nomQuery(queryline,count);break;
 				case description: this.descQuery(queryline,count);break;
+				case desc_range: this.descRangeQuery(queryline,count);break;
 				case taxonomy: this.taxonQuery(queryline,count);break;
 				default: break;
 				}
@@ -246,6 +249,67 @@ public class QueryExec{
 			q.addGroup(g2);
 			q.addGroup(g3);
 		}
+		
+	}
+	
+	private void descRangeQuery(JSONObject queryline,Query q){
+		int i = q.getVarSeq();
+		XSDDatatype dt;
+		String min = "";
+		String max = "";
+		//select datatype
+		if(Pattern.compile("count").matcher(queryline.get("property").toString()).find()){
+			dt = XSDDatatype.XSDinteger;
+			//get min/max
+			try{
+				min = Integer.toString(Integer.parseInt(queryline.get("min").toString()));
+			}catch(NumberFormatException e){
+				min = Integer.toString(Integer.MIN_VALUE);
+			}
+			try{
+				max = Integer.toString(Integer.parseInt(queryline.get("max").toString()));
+			}catch(NumberFormatException e){
+				max = Integer.toString(Integer.MAX_VALUE);
+			}
+		}else{
+			dt = XSDDatatype.XSDdouble;
+			//get min/max
+			try{
+				min = Double.toString(Double.parseDouble(queryline.get("min").toString()));
+			}catch(NumberFormatException e){
+				min = Double.toString(Double.MIN_VALUE);
+			}
+			try{
+				max = Double.toString(Double.parseDouble(queryline.get("max").toString()));
+			}catch(NumberFormatException e){
+				max = Double.toString(Double.MAX_VALUE);
+			}
+		}
+		
+		CompositeGroup g= new CompositeGroup();
+		g.add(new GroupLine(q.getVarBinding("dr_struct"+i),q.getIRIBinding("fna:has_"+queryline.get("property").toString()),q.getVarBinding("dr_struct_prop"+i)));
+		g.add(new GroupLine(q.getVarBinding("dr_struct"+i),q.getIRIBinding("fna:is_instance_of"),q.getIRIBinding("fna:"+queryline.get("organ").toString().toUpperCase())));
+		g.add(new GroupLine(q.getVarBinding("taxontree"),q.getIRIBinding("fna:has_structure"),q.getVarBinding("dr_struct"+i)));
+
+		CompositeGroup g1 = new CompositeGroup();
+		g1.add(new GroupLine(q.getVarBinding("dr_struct_prop"+i),q.getIRIBinding("fna:has_range_from"),q.getVarBinding("dr_range_low"+i)));
+		g1.add(new GroupLine(q.getVarBinding("dr_struct_prop"+i),q.getIRIBinding("fna:has_range_to"),q.getVarBinding("dr_range_high"+i)));
+		Filter f1 = new MatchFilter(q.getVarBinding("dr_range_low"+i),Filter.MatchType.ge,q.getLiteralBinding(min, dt));
+		Filter f2 = new MatchFilter(q.getVarBinding("dr_range_low"+i),Filter.MatchType.le,q.getLiteralBinding(max, dt));
+		Filter f3 = new MatchFilter(q.getVarBinding("dr_range_high"+i),Filter.MatchType.ge,q.getLiteralBinding(min, dt));
+		Filter f4 = new MatchFilter(q.getVarBinding("dr_range_high"+i),Filter.MatchType.le,q.getLiteralBinding(max, dt));
+		g1.appendFilter((f1.AND(f2)).OR(f3.AND(f4)));
+
+		CompositeGroup g2 = new CompositeGroup();
+		g2.add(new GroupLine(q.getVarBinding("dr_struct_prop"+i),q.getIRIBinding("fna:has_value"),q.getVarBinding("dr_value"+i)));
+		Filter f5 = new MatchFilter(q.getVarBinding("dr_value"+i),Filter.MatchType.ge,q.getLiteralBinding(min, dt));
+		Filter f6 = new MatchFilter(q.getVarBinding("dr_value"+i),Filter.MatchType.le,q.getLiteralBinding(max, dt));
+		g2.appendFilter(f5.AND(f6));
+
+		g.add(g1.union(g2));
+
+		q.addGroup(g);
+		
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -316,7 +380,7 @@ public class QueryExec{
 									}
 									//no children, this item should be a result hit
 									else{
-										treeitem.put("uri",result.get("taxontree").toString());
+										treeitem.put("uri",result.get("doc").toString());
 										if(key!=null)treeitem.put("key",key);
 									}
 									treeitems.add(treeitem);
@@ -351,7 +415,7 @@ public class QueryExec{
 									else{
 										int index = itemsintree.indexOf(mt.group()+m.group());					
 										JSONObject treeitem = (JSONObject) treeitems.get(index);
-										treeitem.put("uri",result.get("taxontree").toString());
+										treeitem.put("uri",result.get("doc").toString());
 										if(key!=null)treeitem.put("key",key);
 									}
 								}
