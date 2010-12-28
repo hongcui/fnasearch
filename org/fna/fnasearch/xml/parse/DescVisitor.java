@@ -4,9 +4,12 @@ import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fna.fnasearch.rdf.DoubleLiteralStatement;
 import org.fna.fnasearch.rdf.IntLiteralStatement;
+import org.fna.fnasearch.rdf.LiteralStatement;
 import org.fna.fnasearch.rdf.PosIntLiteralStatement;
 import org.fna.fnasearch.rdf.ResourceStatement;
+import org.fna.fnasearch.rdf.StringLiteralStatement;
 import org.fna.fnasearch.util.URI;
+import org.fna.fnasearch.util.Unit;
 
 public class DescVisitor extends XMLVisitor {
 
@@ -112,16 +115,20 @@ public class DescVisitor extends XMLVisitor {
 		
 		//differentiate count integer from all the rest double
 		
-		//stmt: this struct has_xxx this struct/xxxx
 		//stmt: this struct has_xxxx this struct/xxxx
 		this.statements.add(new ResourceStatement(struct, URI.baseURI+"has_"+e.attributeValue("name"), struct+"/"+e.attributeValue("name")));
 		
 		if(e.attributeValue("name").equals("count")){
-			//stmt: this struct has_value value^^xsd:Integer
+			//stmt: this struct/xxxx has_value value^^xsd:Integer
 			this.statements.add(new IntLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_value", Integer.parseInt(e.attributeValue("value"))));
 		}else{
-			//stmt: this struct has_value value^^xsd:double
-			this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_value",Double.parseDouble(e.attributeValue("value"))));
+			//convert
+			double value = Unit.valueOf(e.attributeValue("unit")).getConvert()*Double.parseDouble(e.attributeValue("value"));
+			value = Math.round(value*100.0)/100.0;
+			//stmt: this struct/xxxx has_value value^^xsd:double
+			this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_value", value));
+			//stmt: this struct/xxxx has_unit cm
+			this.statements.add(new StringLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_value", "cm"));
 		}
 	}
 	
@@ -144,11 +151,21 @@ public class DescVisitor extends XMLVisitor {
 			//stmt: this struct has_xxx this struct/xxxx
 			this.statements.add(new ResourceStatement(struct, URI.baseURI+"has_"+e.attributeValue("name"), struct+"/"+e.attributeValue("name")));
 			//stmt: this struct has_range_from value^^xsd:double
-			if(e.attributeValue("from")!=null)
-			this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_from", Double.parseDouble(e.attributeValue("from"))));
+			if(e.attributeValue("from")!=null){
+				double fromvalue = Unit.valueOf(e.attributeValue("from_unit")).getConvert()*Double.parseDouble(e.attributeValue("from"));
+				fromvalue = Math.round(fromvalue*100.0)/100.0;
+				this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_from", fromvalue));
+				//stmt: this struct/xxxx has_from_unit cm
+				this.statements.add(new StringLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_from_unit", "cm"));
+			}
+			
 			//stmt: this struck has_range_to value^^xsd:double
 			if(e.attributeValue("to")!=null){
-				this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_to", Double.parseDouble(e.attributeValue("to"))));
+				double tovalue = Unit.valueOf(e.attributeValue("to_unit")).getConvert()*Double.parseDouble(e.attributeValue("to"));
+				tovalue = Math.round(tovalue*100.0)/100.0;
+				this.statements.add(new DoubleLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_range_from", tovalue));
+				//stmt: this struct/xxxx has_from_unit cm
+				this.statements.add(new StringLiteralStatement(struct+"/"+e.attributeValue("name"), URI.baseURI+"has_to_unit", "cm"));
 			}else{
 				//do nothing
 			}
