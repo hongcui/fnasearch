@@ -6,6 +6,7 @@ import java.util.Iterator;
 public class CompositeGroup extends Group {
 	private ArrayList<Group> childGroups;
 	private Filter f;
+	private Group u;
 	
 	public CompositeGroup(){
 		this.childGroups = new ArrayList<Group>();
@@ -38,6 +39,10 @@ public class CompositeGroup extends Group {
 			result += "filter ("+f.toString()+" )";
 		}
 		result += "}";
+		if(this.u!=null){
+			result += "\r\nUNION\r\n";
+			result += this.u.toString();
+		}
 		return result;
 	}
 
@@ -49,6 +54,12 @@ public class CompositeGroup extends Group {
 			l.addAll(itr.next().getBindings());
 		}
 		return l;
+	}
+
+	@Override
+	public Group union(Group g) {
+		this.u = g;
+		return this;
 	}
 
 }

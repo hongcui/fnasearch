@@ -41,4 +41,12 @@ public class GroupLine extends Group {
 		return this;
 	}
 
+	@Override
+	public Group union(Group g) {
+		CompositeGroup g1 = new CompositeGroup();
+		g1.add(this);
+		g1.union(g);
+		return g1;
+	}
+
 }
